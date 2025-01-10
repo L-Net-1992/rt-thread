@@ -21,7 +21,7 @@
 #define INT_IRQ     0x00
 #define INT_FIQ     0x01
 
-extern rt_uint32_t rt_interrupt_nest;
+extern rt_atomic_t rt_interrupt_nest;
 
 rt_uint32_t rt_interrupt_from_thread, rt_interrupt_to_thread;
 rt_uint32_t rt_thread_switch_interrupt_flag;
@@ -74,8 +74,9 @@ void rt_hw_interrupt_init(void)
 {
     int i;
 
-    *((volatile unsigned int *)REG_AIC_ISR)  = 0xFFFFFFFF;   // disable all interrupt channel
-    *((volatile unsigned int *)REG_AIC_ISRH) = 0xFFFFFFFF;   // disable all interrupt channel
+    outpw(REG_AIC_ISR, 0xFFFFFFFF);  // disable all interrupt channel
+    outpw(REG_AIC_ISRH, 0xFFFFFFFF); // disable all interrupt channel
+    outpw(REG_AIC_EOSCR, 1);
 
     /* init interrupt nest, and context in thread sp */
     rt_interrupt_nest               = 0;
@@ -234,6 +235,8 @@ static void _nu_sys_ipclk(E_SYS_IPCLK eIPClkIdx, uint32_t bEnable)
     /* Enter critical section */
     level = rt_hw_interrupt_disable();
 
+    SYS_UnlockReg();
+
     if (bEnable)
     {
         /* Enable IP CLK */
@@ -244,6 +247,8 @@ static void _nu_sys_ipclk(E_SYS_IPCLK eIPClkIdx, uint32_t bEnable)
         /* Disable IP CLK */
         outpw(u32IPCLKRegAddr, inpw(u32IPCLKRegAddr) & ~(1 << u32IPCLKRegBit));
     }
+
+    SYS_LockReg();
 
     /* Leave critical section */
     rt_hw_interrupt_enable(level);

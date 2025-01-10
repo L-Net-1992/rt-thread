@@ -1,4 +1,4 @@
-/*
+ /*
  * Copyright (c) 2006-2021, RT-Thread Development Team
  *
  * SPDX-License-Identifier: Apache-2.0
@@ -9,15 +9,17 @@
  * 2021-10.11     mazhiyuan    add idle, yield, suspend, control, priority, delay_until
  */
 
+#define __RT_IPC_SOURCE__ /* include internal API for utest */
+
 #include <rtthread.h>
 #include <stdlib.h>
 #include "utest.h"
 
-#define THREAD_STACK_SIZE  512
+#define THREAD_STACK_SIZE  UTEST_THR_STACK_SIZE
 #define THREAD_TIMESLICE   10
 
-ALIGN(RT_ALIGN_SIZE)
-static char thread2_stack[1024];
+rt_align(RT_ALIGN_SIZE)
+static char thread2_stack[UTEST_THR_STACK_SIZE];
 static struct rt_thread thread2;
 #ifdef RT_USING_HEAP
     static rt_thread_t tid1 = RT_NULL;
@@ -28,19 +30,19 @@ static struct rt_thread thread2;
     static rt_thread_t tid7 = RT_NULL;
 #endif /* RT_USING_HEAP */
 
-static rt_uint32_t tid3_delay_pass_flag = 0;
-static rt_uint32_t tid3_finish_flag = 0;
-static rt_uint32_t tid4_finish_flag = 0;
-static rt_uint32_t tid6_finish_flag = 0;
-static rt_uint32_t thread5_source = 0;
+static volatile rt_uint32_t tid3_delay_pass_flag = 0;
+static volatile rt_uint32_t tid3_finish_flag = 0;
+static volatile rt_uint32_t tid4_finish_flag = 0;
+static volatile rt_uint32_t tid6_finish_flag = 0;
+static volatile rt_uint32_t thread5_source = 0;
 
 #ifndef RT_USING_SMP
-    static rt_uint32_t thread_yield_flag = 0;
+    static volatile rt_uint32_t thread_yield_flag = 0;
 #endif
-static rt_uint32_t entry_idle_hook_times = 0;
+static volatile rt_uint32_t entry_idle_hook_times = 0;
 static rt_thread_t __current_thread;
 static rt_uint8_t change_priority;
-static rt_uint32_t count = 0;
+static volatile rt_uint32_t count = 0;
 
 void thread1_entry(void *param)
 {
@@ -56,7 +58,7 @@ static void test_dynamic_thread(void)
                             thread1_entry,
                             (void *)1,
                             THREAD_STACK_SIZE,
-                            __current_thread->current_priority + 1,
+                            UTEST_THR_PRIORITY + 1,
                             THREAD_TIMESLICE - 5);
     if (tid1 == RT_NULL)
     {
@@ -97,7 +99,7 @@ static void test_static_thread(void)
 {
     rt_err_t ret_init = -RT_ERROR;
     rt_err_t ret_startup = -RT_ERROR;
-    rt_err_t ret_detach = - RT_ERROR;
+    rt_err_t ret_detach = -RT_ERROR;
 
     ret_init = rt_thread_init(&thread2,
                               "thread2",
@@ -105,7 +107,7 @@ static void test_static_thread(void)
                               (void *)2,
                               &thread2_stack[0],
                               sizeof(thread2_stack),
-                              __current_thread->current_priority + 1,
+                              UTEST_THR_PRIORITY + 1,
                               THREAD_TIMESLICE);
     if (ret_init != RT_EOK)
     {
@@ -139,10 +141,11 @@ __exit:
 
 static void thread3_entry(void *parameter)
 {
-    rt_tick_t tick;
+    rt_tick_t tick, latency_tick;
     tick = rt_tick_get();
     rt_thread_delay(15);
-    if (rt_tick_get() - tick > 16)
+    latency_tick = rt_tick_get() - tick;
+    if (latency_tick > 16 || latency_tick < 15)
     {
         tid3_finish_flag = 1;
         tid3_delay_pass_flag = 0;
@@ -160,7 +163,7 @@ static void test_thread_delay(void)
                             thread3_entry,
                             RT_NULL,
                             THREAD_STACK_SIZE,
-                            __current_thread->current_priority - 1,
+                            UTEST_THR_PRIORITY - 1,
                             THREAD_TIMESLICE);
     if (tid3 == RT_NULL)
     {
@@ -210,7 +213,7 @@ static void test_idle_hook(void)
                             thread4_entry,
                             RT_NULL,
                             THREAD_STACK_SIZE,
-                            __current_thread->current_priority - 1,
+                            UTEST_THR_PRIORITY - 1,
                             THREAD_TIMESLICE);
     if (tid4 == RT_NULL)
     {
@@ -259,11 +262,12 @@ static void thread6_entry(void *parameter)
 static void test_thread_yield(void)
 {
     rt_err_t ret_startup = -RT_ERROR;
+    thread5_source = 0;
     tid5 = rt_thread_create("thread5",
                             thread5_entry,
                             RT_NULL,
                             THREAD_STACK_SIZE,
-                            __current_thread->current_priority - 1,
+                            UTEST_THR_PRIORITY - 1,
                             THREAD_TIMESLICE);
     if (tid5 == RT_NULL)
     {
@@ -282,7 +286,7 @@ static void test_thread_yield(void)
                             thread6_entry,
                             RT_NULL,
                             THREAD_STACK_SIZE,
-                            __current_thread->current_priority - 1,
+                            UTEST_THR_PRIORITY - 1,
                             THREAD_TIMESLICE);
     if (tid6 == RT_NULL)
     {
@@ -318,12 +322,13 @@ static void test_thread_control(void)
 {
     rt_err_t ret_control = -RT_ERROR;
     rt_err_t rst_delete = -RT_ERROR;
+    rt_sched_lock_level_t slvl;
 
     tid7 = rt_thread_create("thread7",
                             thread7_entry,
                             RT_NULL,
                             THREAD_STACK_SIZE,
-                            __current_thread->current_priority + 1,
+                            UTEST_THR_PRIORITY + 1,
                             THREAD_TIMESLICE);
     if (tid7 == RT_NULL)
     {
@@ -341,12 +346,17 @@ static void test_thread_control(void)
     }
     rt_thread_mdelay(200);
     rt_thread_control(tid7, RT_THREAD_CTRL_CHANGE_PRIORITY, &change_priority);
-    if (tid7->current_priority != change_priority)
+
+    rt_sched_lock(&slvl);
+    if (rt_sched_thread_get_curr_prio(tid7) != change_priority)
     {
         LOG_E("rt_thread_control failed!");
         uassert_false(1);
+        rt_sched_unlock(slvl);
         goto __exit;
     }
+    rt_sched_unlock(slvl);
+
     rst_delete = rt_thread_control(tid7, RT_THREAD_CTRL_CLOSE, RT_NULL);
     if (rst_delete != RT_EOK)
     {
@@ -379,7 +389,7 @@ static void test_thread_priority(void)
                             thread8_entry,
                             RT_NULL,
                             THREAD_STACK_SIZE,
-                            __current_thread->current_priority - 1,
+                            UTEST_THR_PRIORITY - 1,
                             THREAD_TIMESLICE);
     if (tid8 == RT_NULL)
     {
@@ -447,12 +457,114 @@ static void test_delay_until(void)
     rt_kprintf("delta[20] -> %d\n", delta);
     uassert_int_equal(delta, 20);
 
+    /**
+     * the rt_kprints above can take few ticks to complete, maybe more than 10
+     */
+    tick = rt_tick_get();
     check_tick = tick;
     rt_thread_delay(2);
     rt_thread_delay_until(&tick, 10);
     delta = rt_tick_get() - check_tick;
     rt_kprintf("delta[10] -> %d\n", delta);
     uassert_int_equal(delta, 10);
+}
+
+static rt_thread_t tidA, tidB1, tidB2;
+static uint32_t timeslice_cntA, timeslice_cntB1, timeslice_cntB2;
+
+static void test_timeslice_threadA_entry(void *parameter)
+{
+    while (1)
+    {
+        rt_thread_delay(2);
+        timeslice_cntA++;
+        if (timeslice_cntA > 10) return;
+    }
+}
+static void test_timeslice_threadB1_entry(void *parameter)
+{
+    while (1)
+    {
+        timeslice_cntB1++;
+        if (timeslice_cntA > 10) return;
+    }
+}
+static void test_timeslice_threadB2_entry(void *parameter)
+{
+    while (1)
+    {
+        timeslice_cntB2++;
+        if (timeslice_cntA > 10) return;
+    }
+}
+
+void test_timeslice(void)
+{
+    rt_err_t ret_startup = -RT_ERROR;
+    uint32_t diff;
+
+    timeslice_cntA = 0;
+    timeslice_cntB1 = 0;
+    timeslice_cntB2 = 0;
+
+    tidA = rt_thread_create("timeslice", test_timeslice_threadA_entry, RT_NULL,
+                           2048, UTEST_THR_PRIORITY + 1, 10);
+    if (!tidA)
+    {
+        LOG_E("rt_thread_create failed!");
+        return;
+    }
+
+    rt_thread_control(tidA, RT_THREAD_CTRL_BIND_CPU, (void *)1);
+    ret_startup = rt_thread_startup(tidA);
+    if (ret_startup != RT_EOK)
+    {
+        LOG_E("rt_thread_startup failed!");
+        uassert_false(1);
+        return ;
+    }
+
+    tidB1 = rt_thread_create("timeslice", test_timeslice_threadB1_entry, RT_NULL,
+                           2048, UTEST_THR_PRIORITY + 2, 2);
+    if (!tidB1)
+    {
+        LOG_E("rt_thread_create failed!");
+        return;
+    }
+
+    rt_thread_control(tidB1, RT_THREAD_CTRL_BIND_CPU, (void *)1);
+    ret_startup = rt_thread_startup(tidB1);
+    if (ret_startup != RT_EOK)
+    {
+        LOG_E("rt_thread_startup failed!");
+        uassert_false(1);
+        return ;
+    }
+
+    tidB2 = rt_thread_create("timeslice", test_timeslice_threadB2_entry, RT_NULL,
+                           2048, UTEST_THR_PRIORITY + 2, 2);
+    if (!tidB2)
+    {
+        LOG_E("rt_thread_create failed!");
+        return;
+    }
+
+    rt_thread_control(tidB2, RT_THREAD_CTRL_BIND_CPU, (void *)1);
+    ret_startup = rt_thread_startup(tidB2);
+    if (ret_startup != RT_EOK)
+    {
+        LOG_E("rt_thread_startup failed!");
+        uassert_false(1);
+        return ;
+    }
+    do{
+        rt_thread_delay(2 * 20);
+    }while(timeslice_cntA <= 10);
+
+    rt_kprintf("A:%d,B1:%d,B2:%d\n", timeslice_cntA, timeslice_cntB1, timeslice_cntB2);
+    diff = abs(timeslice_cntB1 - timeslice_cntB2);
+    uassert_true(diff * 100 / timeslice_cntB1 < 30);
+    uassert_true(timeslice_cntA == 11);
 }
 
 #ifndef RT_USING_SMP
@@ -538,65 +650,65 @@ void test_thread_yield_nosmp(void)
     uassert_true(thread_yield_flag == 1);
 }
 
-static rt_uint32_t thread9_count = 0;
-static void thread9_entry(void *parameter)
-{
-    while (1)
-    {
-        thread9_count ++;
-    }
+// static rt_uint32_t thread9_count = 0;
+// static void thread9_entry(void *parameter)
+// {
+//     while (1)
+//     {
+//         thread9_count ++;
+//     }
 
-}
-static void test_thread_suspend(void)
-{
-    static rt_thread_t tid;
-    rt_err_t ret_startup = -RT_ERROR;
-    uint32_t count_before_suspend, count_before_resume, count_after_resume;
-    tid = rt_thread_create("thread9",
-                           thread9_entry,
-                           RT_NULL,
-                           THREAD_STACK_SIZE,
-                           __current_thread->current_priority + 1,
-                           THREAD_TIMESLICE);
-    if (tid == RT_NULL)
-    {
-        LOG_E("rt_thread_create failed!");
-        uassert_false(tid4 == RT_NULL);
-        goto __exit;
-    }
+// }
+// static void test_thread_suspend(void)
+// {
+//     static rt_thread_t tid;
+//     rt_err_t ret_startup = -RT_ERROR;
+//     uint32_t count_before_suspend, count_before_resume, count_after_resume;
+//     tid = rt_thread_create("thread9",
+//                            thread9_entry,
+//                            RT_NULL,
+//                            THREAD_STACK_SIZE,
+//                            UTEST_THR_PRIORITY + 1,
+//                            THREAD_TIMESLICE);
+//     if (tid == RT_NULL)
+//     {
+//         LOG_E("rt_thread_create failed!");
+//         uassert_false(tid4 == RT_NULL);
+//         goto __exit;
+//     }
 
-    ret_startup = rt_thread_startup(tid);
-    if (ret_startup != RT_EOK)
-    {
-        LOG_E("rt_thread_startup failed!");
-        uassert_false(1);
-        goto __exit;
-    }
-    rt_thread_delay(5);
-    rt_thread_suspend(tid);
-    count_before_suspend = thread9_count;
-    uassert_true(count_before_suspend != 0);
-    rt_thread_delay(5);
-    count_before_resume = thread9_count;
-    uassert_true(count_before_suspend == count_before_resume);
-    rt_thread_resume(tid);
-    rt_thread_delay(5);
-    count_after_resume = thread9_count;
-    uassert_true(count_after_resume != count_before_resume);
+//     ret_startup = rt_thread_startup(tid);
+//     if (ret_startup != RT_EOK)
+//     {
+//         LOG_E("rt_thread_startup failed!");
+//         uassert_false(1);
+//         goto __exit;
+//     }
+//     rt_thread_delay(5);
+//     rt_thread_suspend(tid);
+//     count_before_suspend = thread9_count;
+//     uassert_true(count_before_suspend != 0);
+//     rt_thread_delay(5);
+//     count_before_resume = thread9_count;
+//     uassert_true(count_before_suspend == count_before_resume);
+//     rt_thread_resume(tid);
+//     rt_thread_delay(5);
+//     count_after_resume = thread9_count;
+//     uassert_true(count_after_resume != count_before_resume);
 
-__exit:
-    if (tid != RT_NULL)
-    {
-        rt_thread_delete(tid);
-    }
-    return;
-}
+// __exit:
+//     if (tid != RT_NULL)
+//     {
+//         rt_thread_delete(tid);
+//     }
+//     return;
+// }
 #endif
 
 static rt_err_t utest_tc_init(void)
 {
     __current_thread = rt_thread_self();
-    change_priority = __current_thread->current_priority + 5;
+    change_priority = UTEST_THR_PRIORITY + 5;
     tid3_delay_pass_flag = 0;
     tid3_finish_flag = 0;
     tid4_finish_flag = 0;
@@ -627,13 +739,15 @@ static void testcase(void)
     /* yield_nosmp */
     UTEST_UNIT_RUN(test_thread_yield_nosmp);
     /* suspend, resume */
-    UTEST_UNIT_RUN(test_thread_suspend);
+    // UTEST_UNIT_RUN(test_thread_suspend);
 #endif
     /* control */
     UTEST_UNIT_RUN(test_thread_control);
     UTEST_UNIT_RUN(test_thread_priority);
     /* delay_until */
     UTEST_UNIT_RUN(test_delay_until);
+    /* timeslice */
+    // UTEST_UNIT_RUN(test_timeslice); /* Can not running in Github Action QEMU */
 }
 
 

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2006-2021, RT-Thread Development Team
+ * Copyright (c) 2006-2023, RT-Thread Development Team
  *
  * SPDX-License-Identifier: Apache-2.0
  *
@@ -12,7 +12,7 @@
 #define __PWM_CONFIG_H__
 
 #include <rtthread.h>
-#include <drivers/rt_drv_pwm.h>
+#include <drivers/dev_pwm.h>
 
 #ifdef __cplusplus
 extern "C" {

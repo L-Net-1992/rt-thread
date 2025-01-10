@@ -12,6 +12,7 @@ config SOC_SERIES_N9H30
 
     config BSP_USING_MMU
         bool "Enable MMU"
+        select ARCH_ARM_MMU
         default y
 
     config BSP_USING_GPIO
@@ -180,6 +181,11 @@ config SOC_SERIES_N9H30
 
     endif
 
+    config BSP_USING_FMINAND
+        bool "Enable FMI NAND Controller"
+        select RT_USING_MTD_NAND
+        default y
+
     menuconfig BSP_USING_TMR
         bool "Enable Timer Controller(TIMER)"
 
@@ -273,6 +279,7 @@ config SOC_SERIES_N9H30
     menuconfig BSP_USING_SDH
         bool "Enable Secure Digital Host Controller(SDH)"
         select RT_USING_DFS
+        select DFS_USING_POSIX
 
         if BSP_USING_SDH
 

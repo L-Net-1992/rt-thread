@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2006-2021, RT-Thread Development Team
+ * Copyright (c) 2006-2022, RT-Thread Development Team
  *
  * SPDX-License-Identifier: Apache-2.0
  *
@@ -19,7 +19,7 @@
 #include <stdint.h>
 #include <string.h>
 
-#ifdef BSP_USING_TOUCH
+#ifdef BSP_USING_TOUCH_CAP
 
 #define DBG_ENABLE
 #define DBG_SECTION_NAME  "TOUCH.ft"
@@ -116,7 +116,7 @@ static rt_err_t ft_read_point(touch_msg_t msg)
     ret = ft_read(ft_i2c_bus, 0X814E, &state, 1);
     if (ret < 0)
     {
-        return RT_ERROR;
+        return -RT_ERROR;
     }
 
     /* According this state, to get point info */
@@ -134,14 +134,14 @@ static rt_err_t ft_read_point(touch_msg_t msg)
             return RT_EOK;
         }
         msg->event = TOUCH_EVENT_NONE;
-        return RT_ERROR;
+        return -RT_ERROR;
     }
 
     /* Only support one point */
     ret = ft_read(ft_i2c_bus, 0X8150, point, 4);
     if (ret < 0)
     {
-        return RT_ERROR;
+        return -RT_ERROR;
     }
 
     msg->x = (point[1]&0x0F) << 8 | point[0];
