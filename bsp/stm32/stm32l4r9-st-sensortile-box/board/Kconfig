@@ -1,13 +1,5 @@
 menu "Hardware Drivers Config"
 
-config SOC_STM32L4R9ZI
-    bool
-    select SOC_SERIES_STM32L4
-    select RT_USING_COMPONENTS_INIT
-    select RT_USING_USER_MAIN
-    default y
-
-
 menu "On-chip Peripheral Drivers"
 
     config BSP_USING_GPIO
@@ -24,15 +16,15 @@ menu "On-chip Peripheral Drivers"
             bool "Enable UART1"
             default y
         endif
-        
+
     config BSP_USING_USBD
         bool "Enable Full-Speed USB Device Controller(USBD)"
         select RT_USING_USB_DEVICE
         default y
-        
-        
-    source "../libraries/HAL_Drivers/Kconfig"
-    
+
+
+    source "$(BSP_DIR)/../libraries/HAL_Drivers/drivers/Kconfig"
+
 endmenu
 
 endmenu

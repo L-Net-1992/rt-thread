@@ -1,29 +1,22 @@
-/***************************************************************************//**
- * @file    application.c
- * @brief   Demo application
- *  COPYRIGHT (C) 2012, RT-Thread Development Team
- * @author  Bernard, onelife
- * @version 1.0
- *******************************************************************************
- * @section License
- * The license and distribution terms for this file may be found in the file
- * LICENSE in this distribution or at http://www.rt-thread.org/license/LICENSE
- *******************************************************************************
- * @section Change Logs
- * Date         Author      Notes
+/*
+ * Copyright (c) 2006-2022, RT-Thread Development Team
+ *
+ * SPDX-License-Identifier: Apache-2.0
+ *
+ * Change Logs:
+ * Date           Author       Notes
  * 2009-01-05   Bernard     first version
  * 2010-12-29   onelife     Modify for EFM32
  * 2011-05-06   onelife     Add SPI Flash DEMO
  * 2011-07-15   onelife     Add accelerometer DEMO
  * 2011-07-27   onelife     Modify Ethernet DEMO
  * 2011-08-23   onelife     Modify Ethernet DEMO according to the changes of
- *  lwIP API in reversion 1668
+ *                          lwIP API in reversion 1668
  * 2011-12-20   onelife     Add LCD DEMO
  * 2012-02-16   onelife     Add photo frame DEMO
  * 2012-xx-xx   onelife     Add low energy test code
- * 2012-05-17   onelife     Modify photo frame DEMO according to new version of
- *  RTGUI
- ******************************************************************************/
+ * 2012-05-17   onelife     Modify photo frame DEMO according to new version of RTGUI
+ */
 
 /***************************************************************************//**
  * @addtogroup efm32
@@ -482,7 +475,7 @@ void rt_demo_thread_entry(void* parameter)
     struct efm32_accel_result_t result;
 
     rt_kprintf(">>> waiting\n");
-    rt_thread_sleep(6000);
+    rt_thread_delay(6000);
     rt_kprintf(">>> start\n");
     while(1)
     {
@@ -490,7 +483,7 @@ void rt_demo_thread_entry(void* parameter)
         rt_kprintf("Accel x: %x\n", result.x);
         rt_kprintf("Accel y: %x\n", result.y);
         rt_kprintf("Accel z: %x\n\n", result.z);
-        rt_thread_sleep(200);
+        rt_thread_delay(200);
     }
 }
 #endif
@@ -651,7 +644,7 @@ void rt_demo_thread_entry(void* parameter)
     }
 
     /* start display photos */
-    rt_thread_sleep(100);
+    rt_thread_delay(100);
     do
     {
         /* get a photo */
@@ -687,7 +680,7 @@ void rt_demo_thread_entry(void* parameter)
         }
 
         rtgui_send(photo_app, &event.win.parent, sizeof(event));
-        rt_thread_sleep(2000);
+        rt_thread_delay(2000);
     } while (dirent != RT_NULL);
     closedir(dir);
 
@@ -701,7 +694,7 @@ void rt_demo_thread_entry(void* parameter)
     emu_em2_enable();
     while(1)
     {
-        rt_thread_sleep(10);
+        rt_thread_delay(10);
     }
 }
 

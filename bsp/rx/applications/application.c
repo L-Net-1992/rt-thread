@@ -119,7 +119,7 @@ void rt_init_thread_entry(void* parameter)
 #endif
 
 #ifdef RT_USING_USB_HOST
-    rt_usb_host_init();
+    rt_usb_host_init("usbh");
 #endif
 
 #ifdef  RT_USING_FINSH
@@ -172,7 +172,7 @@ void rt_init_thread_entry(void* parameter)
 
 
 
-ALIGN(RT_ALIGN_SIZE)
+rt_align(RT_ALIGN_SIZE)
 static rt_uint8_t led_stack[ 512 ];
 static struct rt_thread led_thread;
 static void led_thread_entry(void* parameter)

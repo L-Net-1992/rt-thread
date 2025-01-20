@@ -11,6 +11,7 @@
 #include <rtthread.h>
 
 #include <stdlib.h>
+#include <unistd.h>
 
 #include "board.h"
 #include "uart_console.h"
@@ -22,7 +23,7 @@
 rt_uint8_t *rt_hw_sram_init(void)
 {
     rt_uint8_t *heap;
-    heap = malloc(RT_HEAP_SIZE);
+    heap = (rt_uint8_t *)malloc(RT_HEAP_SIZE);
     if (heap == RT_NULL)
     {
         rt_kprintf("there is no memory in pc.");

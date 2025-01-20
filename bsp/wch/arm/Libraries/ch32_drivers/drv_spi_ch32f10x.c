@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2006-2021, RT-Thread Development Team
+ * Copyright (c) 2006-2023, RT-Thread Development Team
  *
  * SPDX-License-Identifier: Apache-2.0
  *
@@ -10,7 +10,7 @@
 
 #include <rtthread.h>
 #include <rtdevice.h>
-#include <drivers/spi.h>
+#include "drivers/dev_spi.h"
 #include "board.h"
 #include "drv_spi.h"
 #include "ch32f10x_spi.h"
@@ -111,7 +111,7 @@ static rt_err_t ch32f1_spi_configure(struct rt_spi_device *device, struct rt_spi
     }
     else
     {
-        return RT_EIO;
+        return -RT_EIO;
     }
 
     if (configuration->max_hz >= spi_clock / 2)
@@ -189,7 +189,7 @@ static rt_err_t ch32f1_spi_configure(struct rt_spi_device *device, struct rt_spi
     return RT_EOK;
 };
 
-static rt_uint32_t ch32f1_spi_xfer(struct rt_spi_device *device, struct rt_spi_message *message)
+static rt_ssize_t ch32f1_spi_xfer(struct rt_spi_device *device, struct rt_spi_message *message)
 {
     struct rt_spi_bus *spi_bus;
     struct spi_bus_device *spi_bus_dev;
