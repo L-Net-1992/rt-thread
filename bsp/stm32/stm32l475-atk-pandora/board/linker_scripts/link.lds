@@ -40,6 +40,12 @@ SECTIONS
         KEEP(*(VSymTab))
         __vsymtab_end = .;
 
+        /* section information for utest */
+        . = ALIGN(4);
+        __rt_utest_tc_tab_start = .;
+        KEEP(*(UtestTcTab))
+        __rt_utest_tc_tab_end = .;
+
         /* section information for initial. */
         . = ALIGN(4);
         __rt_init_start = .;
@@ -55,6 +61,8 @@ SECTIONS
 
         . = ALIGN(4);
 
+        KEEP(*(.eh_frame*))
+        . = ALIGN(4);
         _etext = .;
     } > ROM = 0
 
@@ -91,7 +99,7 @@ SECTIONS
         _edata = . ;
     } >RAM1
 
-    .stack : 
+    .stack :
     {
         . = ALIGN(4);
         _sstack = .;
@@ -114,7 +122,7 @@ SECTIONS
         . = ALIGN(4);
         /* This is used by the startup in order to initialize the .bss secion */
         _ebss = . ;
-        
+
         *(.bss.init)
     } > RAM1
     __bss_end = .;

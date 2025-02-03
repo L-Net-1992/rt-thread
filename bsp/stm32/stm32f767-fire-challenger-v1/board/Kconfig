@@ -1,12 +1,5 @@
 menu "Hardware Drivers Config"
 
-config SOC_STM32F767IG
-    bool
-    select SOC_SERIES_STM32F7
-    select RT_USING_COMPONENTS_INIT
-    select RT_USING_USER_MAIN
-    default y
-
 menu "Onboard Peripheral Drivers"
 
     config BSP_USING_USB_TO_USART
@@ -50,7 +43,7 @@ menu "Onboard Peripheral Drivers"
         select BSP_USING_ADC
         select BSP_USING_ADC1
         default n
-    
+
     config BSP_USING_SDCARD
         bool "Enable SDCARD (sdio)"
         select BSP_USING_SDIO
@@ -110,7 +103,7 @@ menu "On-chip Peripheral Drivers"
         select RT_USING_QSPI
         select RT_USING_SPI
         default n
-        
+
     menuconfig BSP_USING_ADC
         bool "Enable ADC"
         default n
@@ -128,7 +121,7 @@ menu "On-chip Peripheral Drivers"
         select RT_USING_I2C_BITOPS
         select RT_USING_PIN
         if BSP_USING_I2C1
-            comment "Notice: PB6 --> 22; PB7 --> 23" 
+            comment "Notice: PB6 --> 22; PB7 --> 23"
             config BSP_I2C1_SCL_PIN
                 int "I2C1 scl pin number"
                 range 1 176
@@ -166,7 +159,7 @@ menu "On-chip Peripheral Drivers"
         select RT_USING_SDIO
         select RT_USING_DFS
         default n
-    
+
     config BSP_USING_FMC
         bool
         default n
@@ -174,9 +167,9 @@ menu "On-chip Peripheral Drivers"
     config BSP_USING_LTDC
         bool
         default n
-        
-    source "../libraries/HAL_Drivers/Kconfig"
-    
+
+    source "$(BSP_DIR)/../libraries/HAL_Drivers/drivers/Kconfig"
+
 endmenu
 
 menu "Board extended module Drivers"

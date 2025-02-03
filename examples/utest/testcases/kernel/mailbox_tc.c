@@ -6,11 +6,14 @@
  * Change Logs:
  * Date           Author       Notes
  * 2021-09-08     liukang     the first version
+ * 2023-09-15     xqyjlj       change stack size in cpu64
  */
 
 #include <rtthread.h>
 #include "utest.h"
 #include <stdlib.h>
+
+#define THREAD_STACKSIZE UTEST_THR_STACK_SIZE
 
 static struct rt_mailbox test_static_mb;
 static char mb_pool[128];
@@ -20,12 +23,12 @@ static rt_mailbox_t test_dynamic_mb;
 static uint8_t static_mb_recv_thread_finish, static_mb_send_thread_finish;
 static uint8_t dynamic_mb_recv_thread_finish, dynamic_mb_send_thread_finish;
 
-ALIGN(RT_ALIGN_SIZE)
-static char thread1_stack[1024];
+rt_align(RT_ALIGN_SIZE)
+static char thread1_stack[UTEST_THR_STACK_SIZE];
 static struct rt_thread thread1;
 
-ALIGN(RT_ALIGN_SIZE)
-static char thread2_stack[1024];
+rt_align(RT_ALIGN_SIZE)
+static char thread2_stack[UTEST_THR_STACK_SIZE];
 static struct rt_thread thread2;
 
 #define THREAD_PRIORITY      9
@@ -191,19 +194,19 @@ static void thread1_recv_static_mb(void *arg)
     rt_err_t result = RT_EOK;
 
     result = rt_mb_recv(&test_static_mb, (rt_ubase_t *)&mb_recv_str1, RT_WAITING_FOREVER);
-    if (result != RT_EOK || strcmp(mb_recv_str1, mb_send_str1) != 0)
+    if (result != RT_EOK || rt_strcmp((const char *)mb_recv_str1, (const char *)mb_send_str1) != 0)
     {
         uassert_false(1);
     }
 
     result = rt_mb_recv(&test_static_mb, (rt_ubase_t *)&mb_recv_str2, RT_WAITING_FOREVER);
-    if (result != RT_EOK || strcmp(mb_recv_str2, mb_send_str2) != 0)
+    if (result != RT_EOK || rt_strcmp((const char *)mb_recv_str2, (const char *)mb_send_str2) != 0)
     {
         uassert_false(1);
     }
 
     result = rt_mb_recv(&test_static_mb, (rt_ubase_t *)&mb_recv_str3, RT_WAITING_FOREVER);
-    if (result != RT_EOK || strcmp(mb_recv_str3, mb_send_str3) != 0)
+    if (result != RT_EOK || rt_strcmp((const char *)mb_recv_str3, (const char *)mb_send_str3) != 0)
     {
         uassert_false(1);
     }
@@ -284,19 +287,19 @@ static void thread3_recv_dynamic_mb(void *arg)
     rt_err_t result = RT_EOK;
 
     result = rt_mb_recv(test_dynamic_mb, (rt_ubase_t *)&mb_recv_str1, RT_WAITING_FOREVER);
-    if (result != RT_EOK || strcmp(mb_recv_str1, mb_send_str1) != 0)
+    if (result != RT_EOK || rt_strcmp((const char *)mb_recv_str1, (const char *)mb_send_str1) != 0)
     {
         uassert_false(1);
     }
 
     result = rt_mb_recv(test_dynamic_mb, (rt_ubase_t *)&mb_recv_str2, RT_WAITING_FOREVER);
-    if (result != RT_EOK || strcmp(mb_recv_str2, mb_send_str2) != 0)
+    if (result != RT_EOK || rt_strcmp((const char *)mb_recv_str2, (const char *)mb_send_str2) != 0)
     {
         uassert_false(1);
     }
 
     result = rt_mb_recv(test_dynamic_mb, (rt_ubase_t *)&mb_recv_str3, RT_WAITING_FOREVER);
-    if (result != RT_EOK || strcmp(mb_recv_str3, mb_send_str3) != 0)
+    if (result != RT_EOK || rt_strcmp((const char *)mb_recv_str3, (const char *)mb_send_str3) != 0)
     {
         uassert_false(1);
     }
@@ -315,7 +318,7 @@ static void test_dynamic_mailbox_send_recv(void)
     mb_recv = rt_thread_create("mb_recv_thread",
                                 thread3_recv_dynamic_mb,
                                 RT_NULL,
-                                1024,
+                                UTEST_THR_STACK_SIZE,
                                 THREAD_PRIORITY - 1,
                                 THREAD_TIMESLICE);
     if (mb_recv == RT_NULL)
@@ -327,7 +330,7 @@ static void test_dynamic_mailbox_send_recv(void)
     mb_send = rt_thread_create("mb_send_thread",
                                 thread4_send_dynamic_mb,
                                 RT_NULL,
-                                1024,
+                                UTEST_THR_STACK_SIZE,
                                 THREAD_PRIORITY - 1,
                                 THREAD_TIMESLICE);
     if (mb_send == RT_NULL)

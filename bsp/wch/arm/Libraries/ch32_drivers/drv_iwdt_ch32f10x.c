@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2006-2021, RT-Thread Development Team
+ * Copyright (c) 2006-2023, RT-Thread Development Team
  *
  * SPDX-License-Identifier: Apache-2.0
  *
@@ -73,7 +73,7 @@ static rt_err_t ch32_wdt_control(rt_watchdog_t *wdt, int cmd, void *arg)
             IWDG_WriteAccessCmd(IWDG_WriteAccess_Enable);
             IWDG_SetPrescaler(wdt_dev->Prescaler);
             IWDG_SetReload(wdt_dev->Reload);
-            IWDG_WriteAccessCmd(IWDG_WriteAccess_Disable);
+            IWDG_ReloadCounter();
             IWDG_Enable();
         }
         break;
@@ -97,7 +97,7 @@ static rt_err_t ch32_wdt_control(rt_watchdog_t *wdt, int cmd, void *arg)
         IWDG_WriteAccessCmd(IWDG_WriteAccess_Enable);
         IWDG_SetPrescaler(wdt_dev->Prescaler);
         IWDG_SetReload(wdt_dev->Reload);
-        IWDG_WriteAccessCmd(IWDG_WriteAccess_Disable);
+        IWDG_ReloadCounter();
         IWDG_Enable();
         wdt_dev->is_start = 1;
 

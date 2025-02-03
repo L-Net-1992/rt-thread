@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2006-2021, RT-Thread Development Team
+ * Copyright (c) 2006-2023, RT-Thread Development Team
  *
  * SPDX-License-Identifier: Apache-2.0
  *
@@ -10,7 +10,7 @@
  */
 
 #include <board.h>
-#include <drivers/watchdog.h>
+#include "drivers/dev_watchdog.h"
 
 #ifdef RT_USING_WDT
 #ifdef BSP_USING_WDT

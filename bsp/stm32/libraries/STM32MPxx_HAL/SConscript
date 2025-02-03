@@ -31,7 +31,7 @@ STM32MP1xx_HAL_Driver/Src/stm32mp1xx_hal_tim.c
 STM32MP1xx_HAL_Driver/Src/stm32mp1xx_hal_tim_ex.c
 ''')
 
-if GetDepend(['RT_USING_SERIAL']):
+if GetDepend(['RT_USING_SERIAL']) or GetDepend(['RT_USING_NANO', 'RT_USING_CONSOLE']):
     src += ['STM32MP1xx_HAL_Driver/Src/stm32mp1xx_hal_uart.c']
     src += ['STM32MP1xx_HAL_Driver/Src/stm32mp1xx_hal_uart_ex.c']
 
@@ -68,7 +68,7 @@ if GetDepend(['RT_USING_AUDIO']):
     src += ['STM32MP1xx_HAL_Driver/Src/stm32mp1xx_hal_sai_ex.c']
 if GetDepend(['BSP_USING_DCMI']):
     src += ['STM32MP1xx_HAL_Driver/Src/stm32mp1xx_hal_dcmi.c']
-    
+
 if GetDepend(['BSP_USING_FMC']):
     src += ['STM32MP1xx_HAL_Driver/Src/stm32mp1xx_ll_fmc.c']
     src += ['STM32MP1xx_HAL_Driver/Src/stm32mp1xx_ll_fsmc.c']
@@ -124,9 +124,7 @@ if GetDepend(['BSP_USING_RTC']):
     src += ['STM32MP1xx_HAL_Driver/Src/stm32mp1xx_hal_rtc_ex.c']
 
 path = [cwd + '/STM32MP1xx_HAL_Driver/Inc',
-    cwd + '/CMSIS/Device/ST/STM32MP1xx/Include',
-    cwd + '/CMSIS/Core/Include',
-    cwd + '/CMSIS/Include']
+    cwd + '/CMSIS/Device/ST/STM32MP1xx/Include']
 
 CPPDEFINES = ['USE_HAL_DRIVER']
 group = DefineGroup('Libraries', src, depend = [''], CPPPATH = path, CPPDEFINES = CPPDEFINES)

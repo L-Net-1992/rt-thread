@@ -26,23 +26,30 @@ on:
       - '**/*.c'
       - '**/*.h'
       - '**/*.cpp'
+  workflow_dispatch:
+  repository_dispatch:
+
+permissions:
+  contents: read # to fetch code (actions/checkout)
 
 jobs:
   test:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-22.04
     name: Tools
+    if: github.repository_owner == 'RT-Thread'
     strategy:
       fail-fast: false
     env:
       TEST_BSP_ROOT: bsp/stm32/stm32f407-atk-explorer
     steps:
-    - uses: actions/checkout@v1
+    - uses: actions/checkout@v4
 
     - name: Install Tools
       shell: bash
       run: |
-        sudo apt-get update
-        sudo apt-get -yqq install scons
+          wget https://raw.githubusercontent.com/RT-Thread/env/master/install_ubuntu.sh
+          chmod 777 install_ubuntu.sh
+          ./install_ubuntu.sh
 
     - name: Install Arm ToolChains
       if: ${{ success() }}
@@ -55,18 +62,17 @@ jobs:
 
     - name: Build Tools
       run: |
-        scons --pyconfig-silent -C $TEST_BSP_ROOT
+        scons --pyconfig-silent -C $TEST_BSP_ROOT 2>menuconfig.log
+        cat menuconfig.log
+        if grep -q "warning:" menuconfig.log; then
+          echo "Errors found in menuconfig, failing the build."
+          exit 1
+        fi
         scons -j$(nproc) -C $TEST_BSP_ROOT
 
     - name: Project generate Tools
       if: ${{ success() }}
       run: |
-        echo "Test to generate mdk project"
-        scons --target=mdk -s -C $TEST_BSP_ROOT
-        scons --target=mdk4 -s -C $TEST_BSP_ROOT
-        scons --target=mdk5 -s -C $TEST_BSP_ROOT
-        echo "Test to generate iar project"
-        scons --target=iar -s -C $TEST_BSP_ROOT
         echo "Test to generate eclipse project"
         scons --target=eclipse -s -C $TEST_BSP_ROOT
         echo "Test to generate cmake project"
@@ -80,3 +86,9 @@ jobs:
         echo "Test to dist project"
         scons --dist -C $TEST_BSP_ROOT
         scons --dist-ide -C $TEST_BSP_ROOT
+        ls $TEST_BSP_ROOT
+        ls $TEST_BSP_ROOT/dist
+        scons --pyconfig-silent -C $TEST_BSP_ROOT/dist/project
+        scons --pyconfig-silent -C $TEST_BSP_ROOT/rt-studio-project
+        scons -C $TEST_BSP_ROOT/dist/project
+        scons -C $TEST_BSP_ROOT/rt-studio-project

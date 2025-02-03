@@ -3,7 +3,7 @@ import sys
 
 # toolchains options
 ARCH='arm'
-CPU='cortex-m0'
+CPU='cortex-m0-dual'
 CROSS_TOOL='gcc'
 
 # bsp lib config
@@ -24,8 +24,8 @@ elif CROSS_TOOL == 'keil':
     PLATFORM    = 'armcc'
     EXEC_PATH   = r'C:/Keil_v5'
 elif CROSS_TOOL == 'iar':
-    PLATFORM    = 'iar'
-    EXEC_PATH   = r'C:/Program Files (x86)/IAR Systems/Embedded Workbench 8.0'
+    PLATFORM    = 'iccarm'
+    EXEC_PATH   = r'C:/Program Files (x86)/IAR Systems/Embedded Workbench 8.3'
 
 if os.getenv('RTT_EXEC_PATH'):
     EXEC_PATH = os.getenv('RTT_EXEC_PATH')
@@ -66,8 +66,8 @@ if PLATFORM == 'gcc':
 
     POST_ACTION = OBJCPY + ' -O binary $TARGET rtthread.bin\n' + SIZE + ' $TARGET \n'
     if "linux" in sys.platform:
-        elf2uf2_path = os.path.join(os.getcwd(), "libraries", "generated", "elf2uf2")
+        elf2uf2_path = os.path.join(os.getcwd(), "tools", "elf2uf2")
         os.system("chmod +x {0}".format(elf2uf2_path))
     else:
-        elf2uf2_path = os.path.join(os.getcwd(), "libraries", "generated", "elf2uf2.exe")
+        elf2uf2_path = os.path.join(os.getcwd(), "tools", "elf2uf2.exe")
     POST_ACTION += "{0} rtthread-pico.elf rtthread-pico.uf2".format(elf2uf2_path) 

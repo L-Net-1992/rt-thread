@@ -38,13 +38,14 @@
 #ifdef PKG_USING_GUIENGINE
 #include <rtgui/event.h>
 #include <rtgui/rtgui_server.h>
+static rt_uint32_t emouse_id;
 #elif defined(PKG_USING_LITTLEVGL2RTT)
 #include <littlevgl2rtt.h>
 #elif defined(PKG_USING_LVGL)
 #include <lvgl.h>
-#include <lv_port_indev.h>
+extern void lv_port_indev_input(rt_int16_t x, rt_int16_t y, lv_indev_state_t state);
 static rt_bool_t touch_down = RT_FALSE;
-#endif
+#endif /* PKG_USING_GUIENGINE */
 
 typedef rt_uint32_t virtual_addr_t;
 
@@ -114,7 +115,6 @@ rt_inline int kmi_read(struct mouse_pl050_pdata_t * pdat, rt_uint8_t * value)
     return RT_FALSE;
 }
 
-static rt_uint32_t emouse_id;
 
 void push_event_touch_move(int x, int y)
 {
@@ -267,6 +267,9 @@ int rt_hw_mouse_init(void)
     virtual_addr_t virt = MOUSE_ADDRESS;
     int irq = MOUSE_IRQ_NUM;
 
+#ifdef RT_USING_SMART
+    virt = (virtual_addr_t)rt_ioremap((void*)MOUSE_ADDRESS, 0x1000);
+#endif
     id = (((read32(virt + 0xfec) & 0xff) << 24) |
                 ((read32(virt + 0xfe8) & 0xff) << 16) |
                 ((read32(virt + 0xfe4) & 0xff) <<  8) |
@@ -275,14 +278,14 @@ int rt_hw_mouse_init(void)
     if(((id >> 12) & 0xff) != 0x41 || (id & 0xfff) != 0x050)
     {
         LOG_E("read id fail id:0x%08x", id);
-        return RT_ERROR;
+        return -RT_ERROR;
     }
 
     pdat = rt_malloc(sizeof(struct mouse_pl050_pdata_t));
     if(!pdat)
     {
         LOG_E("malloc memory failed");
-        return RT_ERROR;
+        return -RT_ERROR;
     }
     rt_memset(pdat, 0, sizeof(struct mouse_pl050_pdata_t));
 
